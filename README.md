@@ -1,5 +1,8 @@
 # CyberShield (Supabase + JavaScript)
 
+**Nama :** Ramzy Fadlil Agusanddawi
+**NIM  :** 242502040052
+
 Aplikasi simulasi firewall dan pemantauan traffic. Frontend HTML/CSS/JavaScript murni,
 database online Supabase (PostgreSQL), dan bisa di-deploy ke Vercel tanpa build.
 
