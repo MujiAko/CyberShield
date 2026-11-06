@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CyberShield - Firewall Monitor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="merek"><span class="logo">◈</span><div><b>CyberShield</b><small>Sistem Pemantauan &amp; Keamanan Jaringan</small></div></div>
+    <div class="chips">
+      <span class="chip ok">● Firewall aktif</span>
+      <span class="chip" id="chip-db">● <span id="teks-db">Menghubungkan…</span></span>
+      <span class="chip" id="jam"></span>
+    </div>
+  </header>
+  <aside class="sidebar">
+    <nav>
+      <button class="nav aktif" data-halaman="dashboard"><i>▣</i>Dashboard</button>
+      <button class="nav" data-halaman="firewall"><i>☰</i>Aturan Firewall</button>
+      <button class="nav" data-halaman="simulasi"><i>⇄</i>Simulasi Traffic &amp; Serangan</button>
+      <button class="nav" data-halaman="logs"><i>▤</i>Log Keamanan</button>
+      <button class="nav" data-halaman="blacklist"><i>⊘</i>Blacklist IP</button>
+    </nav>
+    <div class="status-sistem">
+      <h4>Status sistem</h4>
+      <div class="meter"><span>Aturan aktif</span><b id="v-aturan">0%</b><div class="batang"><i id="bar-aturan"></i></div></div>
+      <div class="meter"><span>Rasio ancaman</span><b id="v-ancaman">0%</b><div class="batang"><i id="bar-ancaman" class="merah"></i></div></div>
+    </div>
+    <p class="identitas"><span id="nama"></span><br><span id="nim"></span></p>
+  </aside>
+
+  <main>
+    <div id="banner" class="banner" hidden>Isi SUPABASE_URL dan SUPABASE_ANON_KEY di js/config.js agar aplikasi terhubung ke database.</div>
+
+    <!-- DASHBOARD -->
+    <section id="hal-dashboard">
+      <div class="statistik">
+        <div class="kartu"><i class="ikon">▣</i><div><span>Total paket diperiksa</span><b id="s-total">0</b><small id="s-total-sub">Seluruh paket yang tercatat</small></div></div>
+        <div class="kartu izin"><i class="ikon">✓</i><div><span>Koneksi diizinkan</span><b id="s-izin">0</b><small id="s-izin-sub">0% dari total paket</small></div></div>
+        <div class="kartu blokir"><i class="ikon">!</i><div><span>Ancaman diblokir</span><b id="s-blokir">0</b><small id="s-blokir-sub">0% dari total paket</small></div></div>
+        <div class="kartu"><i class="ikon">☰</i><div><span>Aturan firewall aktif</span><b id="s-aturan">0</b><small id="s-aturan-sub">dari 0 aturan terdaftar</small></div></div>
+      </div>
+      <div class="grid-utama">
+        <div class="panel"><h3>Volume traffic waktu nyata</h3><div class="grafik"><canvas id="grafik"></canvas></div></div>
+        <div class="panel"><h3>Port paling sering diblokir</h3><div id="top-port"></div></div>
+      </div>
+      <div class="panel tabel-wrap">
+        <div class="judul"><h3>Peringatan keamanan terkini</h3><button class="lihat" data-halaman="logs">Lihat semua log</button></div>
+        <table><thead><tr><th>Waktu</th><th>IP asal</th><th>Port target</th><th>Jenis aktivitas</th><th>Tindakan</th></tr></thead><tbody id="peringatan"></tbody></table>
+      </div>
+    </section>
+
+    <!-- ATURAN FIREWALL -->
+    <section id="hal-firewall" hidden>
+      <h2>Aturan Firewall</h2>
+      <form id="form-aturan" class="panel baris">
+        <input name="nama" placeholder="Nama aturan" required>
+        <input name="ip" placeholder="IP sumber (192.168.1.*)" value="*">
+        <input name="port" type="number" placeholder="Port (kosong = semua)">
+        <select name="protokol"><option>TCP</option><option>UDP</option><option>ANY</option></select>
+        <select name="aksi"><option value="ALLOW">Izinkan</option><option value="BLOCK">Blokir</option></select>
+        <button class="utama">Tambah aturan</button>
+      </form>
+      <div class="panel tabel-wrap"><table>
+        <thead><tr><th>Nama</th><th>IP sumber</th><th>Port</th><th>Protokol</th><th>Aksi</th><th>Status</th><th></th></tr></thead>
+        <tbody id="tabel-aturan"></tbody>
+      </table></div>
+    </section>
+
+    <!-- SIMULASI -->
+    <section id="hal-simulasi" hidden>
+      <h2>Simulasi Traffic &amp; Serangan</h2>
+      <div class="panel">
+        <h3>Kontrol simulasi</h3>
+        <div class="baris">
+          <button class="utama" id="auto-traffic">Mulai traffic otomatis</button>
+          <button data-skenario="normal">Kirim traffic normal</button>
+          <button class="bahaya" data-skenario="portscan">Port Scan</button>
+          <button class="bahaya" data-skenario="ssh">SSH Brute Force</button>
+          <button class="bahaya" data-skenario="synflood">SYN Flood</button>
+          <button class="bahaya" data-skenario="sqli">SQL Injection</button>
+        </div>
+        <p id="hasil-simulasi" class="catatan">Pilih skenario untuk mengirim paket ke firewall.</p>
+      </div>
+      <form id="form-uji" class="panel">
+        <h3>Uji koneksi manual</h3>
+        <div class="baris">
+          <input name="ip" placeholder="IP sumber (10.0.0.5)" required>
+          <input name="port" type="number" placeholder="Port tujuan" required>
+          <select name="protokol"><option>TCP</option><option>UDP</option></select>
+          <button class="utama">Uji koneksi</button>
+        </div>
+        <p id="hasil-uji" class="catatan"></p>
+      </form>
+      <div class="panel tabel-wrap">
+        <h3>Aliran traffic dan status koneksi</h3>
+        <table><thead><tr><th>IP sumber</th><th>Port</th><th>Aktivitas</th><th>Status</th><th>Alasan</th></tr></thead><tbody id="feed-traffic"></tbody></table>
+      </div>
+    </section>
+
+    <!-- LOG -->
+    <section id="hal-logs" hidden>
+      <h2>Log Keamanan</h2>
+      <div class="panel baris">
+        <input id="cari-log" placeholder="Cari IP atau jenis aktivitas">
+        <select id="filter-aksi"><option value="">Semua tindakan</option><option value="ALLOW">Diizinkan</option><option value="BLOCK">Diblokir</option></select>
+        <button id="hapus-log">Hapus semua log</button>
+      </div>
+      <div class="panel tabel-wrap"><table>
+        <thead><tr><th>Waktu</th><th>IP sumber</th><th>Port</th><th>Aktivitas</th><th>Tindakan</th><th>Alasan</th></tr></thead>
+        <tbody id="tabel-log"></tbody>
+      </table></div>
+    </section>
+
+    <!-- BLACKLIST -->
+    <section id="hal-blacklist" hidden>
+      <h2>Blacklist IP</h2>
+      <form id="form-blacklist" class="panel baris">
+        <input name="ip" placeholder="IP yang diblokir" required>
+        <input name="alasan" placeholder="Alasan (opsional)">
+        <button class="utama">Tambah ke blacklist</button>
+      </form>
+      <div class="panel tabel-wrap"><table>
+        <thead><tr><th>IP</th><th>Alasan</th><th>Ditambahkan</th><th></th></tr></thead>
+        <tbody id="tabel-blacklist"></tbody>
+      </table></div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/firewall.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
