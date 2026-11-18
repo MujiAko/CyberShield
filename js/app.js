@@ -257,9 +257,9 @@ async function muatBlacklist() {
   const r = await db.from("blacklist_ips").select("*").order("dibuat", { ascending: false });
   cek(r);
   $("tabel-blacklist").innerHTML = r.data.map((b) => `
-    <tr><td>${esc(b.ip)}</td><td class="alasan">${esc(b.alasan)}</td><td>${waktuLokal(b.dibuat)}</td>
+    <tr><td>${esc(b.ip)}</td><td>${tag("BLOCK")}</td><td class="alasan">${esc(b.alasan)}</td><td>${waktuLokal(b.dibuat)}</td>
     <td><button data-hapus="${b.id}">Hapus</button></td></tr>`).join("")
-    || `<tr><td colspan="4" class="kosong">Blacklist kosong.</td></tr>`;
+    || `<tr><td colspan="5" class="kosong">Blacklist kosong.</td></tr>`;
 }
 
 $("form-blacklist").addEventListener("submit", (e) => {
